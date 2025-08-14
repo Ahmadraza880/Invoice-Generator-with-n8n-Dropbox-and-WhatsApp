@@ -97,6 +97,6 @@ This project is open-source under the MIT License.
 ---
 
 ## 🌐 Connect With Me
-- **LinkedIn**: [Your LinkedIn Profile](www.linkedin.com/in/ahmad-raza-403bbd0278)
-- **Fiverr**: [Your Fiverr Profile](https://www.fiverr.com/users/nitrola/)
+- **LinkedIn**: [LinkedIn Profile](www.linkedin.com/in/ahmad-raza-403bbd0278)
+- **Fiverr**: [Fiverr Profile](https://www.fiverr.com/users/nitrola/)
 
