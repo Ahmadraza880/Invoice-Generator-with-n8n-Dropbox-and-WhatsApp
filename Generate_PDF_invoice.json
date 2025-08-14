@@ -1,0 +1,251 @@
+{
+  "name": "Generate_PDF_invoice",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "invoice",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -112,
+        80
+      ],
+      "id": "ce45d6d2-b2e5-47dc-a5f8-2f8c637587f2",
+      "name": "Webhook",
+      "webhookId": "d0dbfd1b-6ae8-4325-b44d-36336b385097"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.pdfshift.io/v3/convert/pdf",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-API-Key",
+              "value": "sk_728edcc775e3674c03edbcc7cb0bb33c6aa1cabd"
+            },
+            {
+              "name": "Content-type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ source: $json.parameters.values.string[0].value }) }}\n",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        176,
+        48
+      ],
+      "id": "537e8a99-2d42-4b15-9a1d-6241f43a6180",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "from": "+14155238886",
+        "to": "+923186158031",
+        "toWhatsapp": true,
+        "message": "={{ $json.url }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.twilio",
+      "typeVersion": 1,
+      "position": [
+        768,
+        80
+      ],
+      "id": "3bc64419-477b-48e5-bf59-e5e261a7c02c",
+      "name": "Send_invoice_to_whatsapp",
+      "credentials": {
+        "twilioApi": {
+          "id": "jpYA5jT4xMz5OmAN",
+          "name": "Twilio account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={\n  \"url\": \"{{ $json.url.replace('dl=0', 'dl=1') }}\"\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        640,
+        -128
+      ],
+      "id": "40d2175e-e0f8-42b7-8726-f107fb9c5b4d",
+      "name": "Edit Url"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.dropboxapi.com/2/sharing/create_shared_link_with_settings",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"path\": \"{{$json[\"path_display\"]}}\",\n  \"settings\": {\n    \"requested_visibility\": \"public\"\n  }\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        512,
+        48
+      ],
+      "id": "425e9dfe-4102-497c-901e-a031900cf538",
+      "name": "Get file url",
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "WH0rexpCn5NBACkJ",
+          "name": "Unnamed credential 3"
+        },
+        "oAuth2Api": {
+          "id": "l6atsuK4iNqgsdRO",
+          "name": "Unnamed credential 4"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "path": "=/Invoices/invoice_results.pdf",
+        "binaryData": true
+      },
+      "type": "n8n-nodes-base.dropbox",
+      "typeVersion": 1,
+      "position": [
+        352,
+        48
+      ],
+      "id": "c38b9ce2-0ccf-4993-877b-7fb5a924e42f",
+      "name": "Upload a file to dropbox",
+      "credentials": {
+        "dropboxOAuth2Api": {
+          "id": "A4GSv5VOA77kwdj1",
+          "name": "Dropbox account 4"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={\n  \"parameters\": {\n    \"keepOnlySet\": false,\n    \"values\": {\n      \"string\": [\n        {\n          \"name\": \"html\",\n          \"value\": \"<html>\\n  <head>\\n    <style>\\n      body { font-family: Arial, sans-serif; margin: 40px; }\\n      h1 { color: #333; }\\n      table { border-collapse: collapse; width: 100%; margin-top: 20px; }\\n      th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }\\n      th { background-color: #f2f2f2; }\\n      .total { font-weight: bold; }\\n      .discount { color: green; }\\n    </style>\\n  </head>\\n  <body>\\n    <h1>Invoice</h1>\\n    <p><strong>Client:</strong> {{ $json.body.clientName }}</p>\\n    <p><strong>Phone:</strong> {{$json.body.clientPhone}}</p>\\n    <table>\\n      <tr>\\n        <th>Item</th><th>Qty</th><th>Price</th><th>Total</th>\\n      </tr>\\n      <tr>\\n        <td>{{$json.body.itemDescription}}</td>\\n        <td>{{$json.body.itemQty}}</td>\\n        <td>${{$json.body.itemPrice}}</td>\\n        <td>${{$json.body.totalPrice[0]}}</td>\\n      </tr>\\n    </table>\\n \\n Discount = {{ $json.body.discountApplied }}  \\n  </body>\\n</html>\"\n        }\n      ]\n    },\n    \"options\": {}\n  },\n  \"name\": \"Set HTML Invoice\",\n  \"type\": \"n8n-nodes-base.set\",\n  \"typeVersion\": 1,\n  \"position\": [\n    780,\n    300\n  ]\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        32,
+        -128
+      ],
+      "id": "bec912f5-6388-4165-98b5-c8d2dc082c89",
+      "name": "get response from form"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "get response from form",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Upload a file to dropbox",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Url": {
+      "main": [
+        [
+          {
+            "node": "Send_invoice_to_whatsapp",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get file url": {
+      "main": [
+        [
+          {
+            "node": "Edit Url",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload a file to dropbox": {
+      "main": [
+        [
+          {
+            "node": "Get file url",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "get response from form": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "08d36d83-5ed9-419f-9d24-6c66aa4ddc2b",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "2de80f5914130ddac7b892de4e5de570f30cd22f0b2bd794e45e389d7524d1e9"
+  },
+  "id": "41OFb4iSZru0Nnnt",
+  "tags": []
+}
