@@ -26,7 +26,7 @@
           "parameters": [
             {
               "name": "X-API-Key",
-              "value": "sk_728edcc775e3674c03edbcc7cb0bb33c6aa1cabd"
+              "value": "your api of pdfshift"
             },
             {
               "name": "Content-type",
@@ -57,7 +57,7 @@
     {
       "parameters": {
         "from": "+14155238886",
-        "to": "+923186158031",
+        "to": "your number",
         "toWhatsapp": true,
         "message": "={{ $json.url }}",
         "options": {}
